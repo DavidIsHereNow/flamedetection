@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latest Sensor Data</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .sensor-panel {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            padding: 30px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            animation: fadeIn 1s ease-out;
+        }
+        .sensor-data {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .sensor-item {
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 150px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .sensor-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        .sensor-label {
+            font-weight: bold;
+            color: #bbb;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        .sensor-value {
+            font-size: 1.6em;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        .update-time {
+            text-align: center;
+            color: #888;
+            margin-top: 30px;
+            font-style: italic;
+        }
+        #fire-sensor { color: #ff4d4d; }
+        #temperature-sensor { color: #ffa500; }
+        #smoke-sensor { color: #4da6ff; }
+        #yolo-status { color: #4dff4d; }
+        #decision-label { 
+            color: #ff4dff;
+            grid-column: span 2;
+            font-size: 2em;
+        }
+        #decision-label .sensor-value {
+            font-size: 2em;
+            margin-top: 20px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .sensor-item:hover .sensor-value {
+            animation: pulse 1s infinite;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .sensor-data {
+                grid-template-columns: 1fr;
+            }
+            #decision-label {
+                grid-column: span 1;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            .sensor-item {
+                min-height: 120px;
+            }
+            .sensor-label {
+                font-size: 1.1em;
+            }
+            .sensor-value {
+                font-size: 1.4em;
+            }
+            #decision-label .sensor-value {
+                font-size: 1.8em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sensor-panel {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            .sensor-item {
+                min-height: 100px;
+            }
+            .sensor-label {
+                font-size: 1em;
+            }
+            .sensor-value {
+                font-size: 1.2em;
+            }
+            #decision-label .sensor-value {
+                font-size: 1.6em;
+            }
+        }
+        .sensor-description {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .warning {
+            color: #ff4d4d;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sensor-panel">
+        <h1>Panel Deteksi Kebakaran</h1>
+        <div class="sensor-data">
+            <div class="sensor-item">
+                <div class="sensor-label">Sensor Api</div>
+                <div class="sensor-value" id="fire-sensor">-</div>
+                <div class="sensor-description" id="fire-sensor-description"></div>
+            </div>
+            <div class="sensor-item">
+                <div class="sensor-label">Sensor Tempratur</div>
+                <div class="sensor-value" id="temperature-sensor">-</div>
+                <div class="sensor-description" id="temperature-sensor-description"></div>
+            </div>
+            <div class="sensor-item">
+                <div class="sensor-label">Sensor Asap</div>
+                <div class="sensor-value" id="smoke-sensor">-</div>
+                <div class="sensor-description" id="smoke-sensor-description"></div>
+            </div>
+            <div class="sensor-item">
+                <div class="sensor-label">Status YOLOv5</div>
+                <div class="sensor-value" id="yolo-status">-</div>
+                <div class="sensor-description" id="yolo-status-description"></div>
+            </div>
+            <div class="sensor-item" id="decision-label">
+                <div class="sensor-label">Status Kebakaran</div>
+                <div class="sensor-value">-</div>
+                <div class="sensor-description" id="decision-label-description"></div>
+            </div>
+        </div>
+        <p class="update-time" id="last-updated">Last Updated: -</p>
+    </div>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCRg7wWkwN0_w7wpdU7ugJT9_lN6aIQRBQ",
+            authDomain: "flamedetection-8c8f6.firebaseapp.com",
+            databaseURL: "https://flamedetection-8c8f6-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "flamedetection-8c8f6",
+            storageBucket: "flamedetection-8c8f6.appspot.com",
+            messagingSenderId: "325584349031",
+            appId: "1:325584349031:web:8b10f75f2d7a5b42c5f1c2",
+            measurementId: "G-975X3YHKKP"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Function to fetch data from Firebase
+        function fetchData() {
+    const sensorRef = ref(database, 'SensorData');
+    onValue(sensorRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const latestData = Object.values(data).sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp))[0];
+            const currentTime = new Date();
+
+            if (new Date(latestData.Timestamp) < currentTime) {
+                updateSensor('fire-sensor', formatBinaryValue(latestData.FireSensor), latestData.Timestamp);
+                updateSensor('temperature-sensor', latestData.TemperatureSensor + ' °C', latestData.Timestamp);
+                updateSensor('smoke-sensor', latestData.SmokeSensor + ' ppm', latestData.Timestamp);
+                updateSensor('yolo-status', formatBinaryValue(latestData.YOLOv5Status), latestData.Timestamp);
+                updateSensor('decision-label', formatDecisionLabel(latestData.DecisionLabel), latestData.Timestamp);
+
+                document.getElementById('last-updated').textContent = 'Update terakhir: ' + latestData.Timestamp;
+            }
+        }
+    });
+}
+
+        function updateSensor(id, value, timestamp) {
+    const sensorValue = document.getElementById(id);
+    const sensorDescription = document.getElementById(id + '-description');
+    
+    sensorValue.textContent = value;
+
+    let descriptionText = "";
+
+    if (id === 'smoke-sensor' && parseFloat(value) >= 400) {
+        descriptionText = "Melebihi ambang batas, terdeteksi kepulan asap";
+    } else if (id === 'temperature-sensor' && parseFloat(value) >= 40) {
+        descriptionText = "Suhu terdeteksi tinggi";
+    }
+
+    if (isInactive(timestamp)) {
+        descriptionText = "Sensor sedang tidak aktif";
+        sensorDescription.classList.add('warning');
+    } else {
+        sensorDescription.classList.remove('warning');
+    }
+
+    sensorDescription.textContent = descriptionText;
+}
+
+
+        function isInactive(timestamp) {
+            const lastUpdate = new Date(timestamp);
+            const now = new Date();
+            return (now - lastUpdate) > 60000; // 1 minute of inactivity
+        }
+
+        function formatBinaryValue(value) {
+            return value ? 'Terdeteksi' : 'Tidak Terdeteksi';
+        }
+
+        function formatDecisionLabel(value) {
+            return value ? 'Bahaya! Kebakaran terdeteksi' : 'Tidak Terdeteksi Kebakaran';
+        }
+
+        setInterval(fetchData, 1000); // Update every second
+        fetchData(); // Call immediately when page loads
+    </script>
+</body>
+</html>
