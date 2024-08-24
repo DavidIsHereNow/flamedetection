@@ -275,8 +275,10 @@
         }
 
         function formatDecisionLabel(value) {
-            return value ? 'Bahaya! Kebakaran terdeteksi' : 'Tidak Terdeteksi Kebakaran';
+            return value === 1 ? 'Bahaya! Kebakaran terdeteksi' : 'Tidak Terdeteksi Kebakaran';
         }
+
+
 
         setInterval(fetchData, 1000); // Update every second
         fetchData(); // Call immediately when page loads
